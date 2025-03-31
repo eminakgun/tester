@@ -153,12 +153,12 @@ class TestMakefileBuildSystem:
         
         # Verify build call
         build_call = mock_run.call_args_list[0]
-        assert "build" in build_call[0][0]
+        assert "build_testbench1" in build_call[0][0]  # Check for custom build target
         assert "TESTBENCH=testbench1" in build_call[0][0]
         
         # Verify run call
         run_call = mock_run.call_args_list[1]
-        assert "run" in run_call[0][0]
+        assert "sim_testbench1" in run_call[0][0]  # Check for custom run target
         assert "TESTBENCH=testbench1" in run_call[0][0]
         assert "TEST=basic_test" in run_call[0][0]
         
@@ -177,7 +177,7 @@ class TestMakefileBuildSystem:
         # Verify
         mock_run.assert_called_once()  # Should only call run once
         cmd_args = mock_run.call_args[0][0]
-        assert "run" in cmd_args
+        assert "sim_testbench2" in cmd_args  # Check for custom run target
         assert "TESTBENCH=testbench2" in cmd_args
         assert "TEST=basic_test" in cmd_args
         assert result is True
@@ -199,7 +199,7 @@ class TestMakefileBuildSystem:
         # Verify
         mock_run.assert_called_once()  # Should only try to build
         cmd_args = mock_run.call_args[0][0]
-        assert "build" in cmd_args
+        assert "build_testbench1" in cmd_args  # Check for custom build target
         assert result is False  # Should fail due to build failure
 
     @patch('subprocess.run')
@@ -254,5 +254,37 @@ def test_build_with_custom_build_command(mock_run, makefile_config):
     assert "custom_build_target" in cmd_args
     assert "build" not in cmd_args
     assert "TESTBENCH=custom_testbench" in cmd_args
+    assert "DEBUG=1" in cmd_args
+    assert result is True
+
+
+@patch('subprocess.run')
+def test_run_with_custom_run_command(mock_run, makefile_config):
+    """Test run when testbench has a custom run command"""
+    # Setup
+    config = makefile_config.copy()
+    config["targets"] = {
+        "custom_testbench": {
+            "build_command": "make custom_build_target",
+            "run_command": "make custom_run_target"
+        }
+    }
+    
+    mock_run.return_value = MagicMock(returncode=0)
+    build_system = MakefileBuildSystem(config)
+    
+    # Execute - first mock the build method to isolate testing of run
+    with patch.object(build_system, 'build', return_value=True):
+        result = build_system.run("custom_testbench", "test_case", {"debug": True})
+    
+    # Verify
+    mock_run.assert_called_once()
+    cmd_args = mock_run.call_args[0][0]
+    
+    # Verify the custom target is used instead of the default "run" target
+    assert "custom_run_target" in cmd_args
+    assert "run" not in cmd_args
+    assert "TESTBENCH=custom_testbench" in cmd_args
+    assert "TEST=test_case" in cmd_args
     assert "DEBUG=1" in cmd_args
     assert result is True 

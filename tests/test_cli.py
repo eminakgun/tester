@@ -193,8 +193,8 @@ class TestCLICommands:
         assert result.exit_code == 0
         assert "Successfully built" in result.output
         mock_build_system.build.assert_called_once_with(
-            "my_testbench", 
-            {"debug": True, "incremental": False}
+            "my_testbench",
+            {"debug": True, "incremental": False, "verbose": False}
         )
 
     @patch('cli.get_build_system')
@@ -253,7 +253,7 @@ class TestCLICommands:
             assert result.exit_code == 0
             mock_build_system.build.assert_called_with(
                 "my_testbench",  # Should use default testbench
-                {"debug": False, "incremental": False}
+                {"debug": False, "incremental": False, "verbose": False}
             )
 
     def test_list_testbenches_error(self, cli_runner, mock_config):

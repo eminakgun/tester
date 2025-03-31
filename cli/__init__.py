@@ -151,7 +151,8 @@ def list_tests(config, testbench: str):
 @click.option('--debug', is_flag=True, help='Enable debug build')
 @click.option('--incremental', is_flag=True, help='Enable incremental build')
 @click.pass_obj
-def build(config, testbench: str, debug: bool, incremental: bool):
+@click.pass_context
+def build(ctx, config, testbench: str, debug: bool, incremental: bool):
     """Build a testbench"""
     try:
         if not testbench:
@@ -160,7 +161,8 @@ def build(config, testbench: str, debug: bool, incremental: bool):
         build_system = get_build_system(config)
         options = {
             "debug": debug,
-            "incremental": incremental
+            "incremental": incremental,
+            "verbose": ctx.parent.params.get('verbose', False)  # Get verbose flag from parent context
         }
         
         if build_system.build(testbench, options):
@@ -180,7 +182,8 @@ def build(config, testbench: str, debug: bool, incremental: bool):
 @click.option('--coverage', is_flag=True, help='Enable coverage collection')
 @click.option('--runtime-args', '-r', multiple=True, help='Additional runtime arguments (can be used multiple times)')
 @click.pass_obj
-def run(config, testbench: str, test: str, seed: Optional[int], verbosity: Optional[str], coverage: bool, runtime_args: tuple):
+@click.pass_context
+def run(ctx, config, testbench: str, test: str, seed: Optional[int], verbosity: Optional[str], coverage: bool, runtime_args: tuple):
     """Run a specific test"""
     try:
         if not testbench:
@@ -188,7 +191,8 @@ def run(config, testbench: str, test: str, seed: Optional[int], verbosity: Optio
         
         build_system = get_build_system(config)
         options = {
-            "coverage": coverage
+            "coverage": coverage,
+            "verbose": ctx.parent.params.get('verbose', False)  # Get verbose flag from parent context
         }
         
         if seed is not None:

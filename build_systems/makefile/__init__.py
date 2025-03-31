@@ -74,12 +74,24 @@ class MakefileBuildSystem(BuildSystemBase):
         logger.debug(f"Running command: {' '.join(cmd)}")
         
         try:
-            subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            # Check if verbose mode is enabled
+            verbose = options.get("verbose", False)
+            
+            if verbose:
+                # Run with output displayed to console
+                result = subprocess.run(cmd, check=True)
+            else:
+                # Capture output (original behavior)
+                result = subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            
             return True
         except subprocess.CalledProcessError as e:
             logger.error(f"Make command failed: {e}")
-            logger.error(f"Stdout: {e.stdout.decode('utf-8')}")
-            logger.error(f"Stderr: {e.stderr.decode('utf-8')}")
+            # Always show error output even in non-verbose mode
+            if hasattr(e, 'stdout') and e.stdout:
+                logger.error(f"Stdout: {e.stdout.decode('utf-8')}")
+            if hasattr(e, 'stderr') and e.stderr:
+                logger.error(f"Stderr: {e.stderr.decode('utf-8')}")
             return False
 
     def build(self, testbench: str, options: Optional[Dict[str, Any]] = None) -> bool:
@@ -179,7 +191,24 @@ class MakefileBuildSystem(BuildSystemBase):
             # No build command - assume run command handles both build and run
             logger.info(f"No separate build command for {testbench}, assuming run command handles build")
         
-        return self._run_make_command("run", run_options)
+        # Check if testbench has a custom run command
+        if "run_command" in testbench_config:
+            # Use the custom run command
+            custom_cmd = testbench_config["run_command"]
+            logger.info(f"Using custom run command: {custom_cmd}")
+            
+            # Parse the command to extract the make target
+            # Assuming format like "make sim_testbench1"
+            parts = custom_cmd.split()
+            if len(parts) > 1 and parts[0].lower() == "make":
+                target = parts[1]
+                return self._run_make_command(target, run_options)
+            else:
+                logger.error(f"Invalid run command format: {custom_cmd}")
+                return False
+        else:
+            # Use default "run" target
+            return self._run_make_command("run", run_options)
 
     def clean(self, testbench: str) -> bool:
         """Clean the testbench using make clean.
