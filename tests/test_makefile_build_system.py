@@ -107,4 +107,122 @@ def test_get_available_tests(mock_run, makefile_system):
     cmd_args = mock_run.call_args[0][0]
     assert "list-tests" in cmd_args
     assert "TESTBENCH=my_testbench" in cmd_args
-    assert result == ["test1", "test2", "test3"] 
+    assert result == ["test1", "test2", "test3"]
+
+
+@pytest.fixture
+def config_with_separate_commands():
+    return {
+        "makefile_path": ".",
+        "make_command": "make",
+        "targets": {
+            "testbench1": {
+                "build_command": "make build_testbench1",
+                "run_command": "make sim_testbench1"
+            }
+        }
+    }
+
+
+@pytest.fixture
+def config_with_combined_command():
+    return {
+        "makefile_path": ".",
+        "make_command": "make",
+        "targets": {
+            "testbench2": {
+                "run_command": "make sim_testbench2"
+            }
+        }
+    }
+
+
+class TestMakefileBuildSystem:
+    @patch('subprocess.run')
+    def test_run_with_separate_build_command(self, mock_run, config_with_separate_commands):
+        """Test run when testbench has separate build command"""
+        # Setup
+        mock_run.return_value = MagicMock(returncode=0)
+        build_system = MakefileBuildSystem(config_with_separate_commands)
+        
+        # Execute
+        result = build_system.run("testbench1", "basic_test", {"SIMULATOR": "vcs"})
+        
+        # Verify
+        assert mock_run.call_count == 2  # Should call both build and run
+        
+        # Verify build call
+        build_call = mock_run.call_args_list[0]
+        assert "build" in build_call[0][0]
+        assert "TESTBENCH=testbench1" in build_call[0][0]
+        
+        # Verify run call
+        run_call = mock_run.call_args_list[1]
+        assert "run" in run_call[0][0]
+        assert "TESTBENCH=testbench1" in run_call[0][0]
+        assert "TEST=basic_test" in run_call[0][0]
+        
+        assert result is True
+
+    @patch('subprocess.run')
+    def test_run_with_combined_command(self, mock_run, config_with_combined_command):
+        """Test run when testbench has only run command"""
+        # Setup
+        mock_run.return_value = MagicMock(returncode=0)
+        build_system = MakefileBuildSystem(config_with_combined_command)
+        
+        # Execute
+        result = build_system.run("testbench2", "basic_test", {"SIMULATOR": "vcs"})
+        
+        # Verify
+        mock_run.assert_called_once()  # Should only call run once
+        cmd_args = mock_run.call_args[0][0]
+        assert "run" in cmd_args
+        assert "TESTBENCH=testbench2" in cmd_args
+        assert "TEST=basic_test" in cmd_args
+        assert result is True
+
+    @patch('subprocess.run')
+    def test_run_with_build_failure(self, mock_run, config_with_separate_commands):
+        """Test run when build fails"""
+        # Setup
+        error = subprocess.CalledProcessError(1, [])
+        error.stdout = b'Build failed'
+        error.stderr = b'Error during build'
+        mock_run.side_effect = error
+        
+        build_system = MakefileBuildSystem(config_with_separate_commands)
+        
+        # Execute
+        result = build_system.run("testbench1", "basic_test")
+        
+        # Verify
+        mock_run.assert_called_once()  # Should only try to build
+        cmd_args = mock_run.call_args[0][0]
+        assert "build" in cmd_args
+        assert result is False  # Should fail due to build failure
+
+    @patch('subprocess.run')
+    def test_run_with_runtime_args(self, mock_run, config_with_separate_commands):
+        """Test run with runtime arguments"""
+        # Setup
+        mock_run.return_value = MagicMock(returncode=0)
+        build_system = MakefileBuildSystem(config_with_separate_commands)
+        
+        options = {
+            "runtime_args": ["+UVM_TESTNAME=test1", "+TIMEOUT=1000"],
+            "seed": 12345,
+            "verbosity": "high"
+        }
+        
+        # Execute
+        result = build_system.run("testbench1", "basic_test", options)
+        
+        # Verify
+        assert mock_run.call_count == 2
+        run_call = mock_run.call_args_list[1]
+        cmd_args = run_call[0][0]
+        assert "RUNTIME_ARGS=+UVM_TESTNAME=test1 +TIMEOUT=1000" in cmd_args
+        assert "SEED=12345" in cmd_args
+        assert "VERBOSITY=UVM_HIGH" in cmd_args
+        assert result is True 

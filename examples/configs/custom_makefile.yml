@@ -1,12 +1,35 @@
-# Example configuration when using an existing Makefile
+# Example configuration for custom Makefile
+name: custom-makefile
+description: Project using custom Makefile
+
 build_system: makefile
-makefile_path: /path/to/your/Makefile
+makefile_path: .
 make_command: make
 use_custom_makefile: true
-default_testbench: my_testbench
+
+# Define testbench targets
+targets:
+  # Testbench with separate build/run commands
+  testbench1:
+    description: "Run testbench 1"
+    build_command: make build_testbench1
+    run_command: make sim_testbench1
+    
+  # Testbench with only run command (should handle build too)
+  testbench2:
+    description: "Run testbench 2"
+    run_command: make sim_testbench2
+    
+  all_tests:
+    description: "Run all testbenches"
+    build_command: make build_all
+    run_command: make sim_all
+    dependencies:
+      - testbench1
+      - testbench2
 
 testbenches:
-  my_testbench:
+  testbench1:
     tests:
       basic_test:
         runtime_args:
@@ -16,4 +39,14 @@ testbenches:
         runtime_args:
           - +UVM_TESTNAME=extended_test
           - +TIMEOUT=2000
-          - +MY_ARG=value2 
+  
+  testbench2:
+    tests:
+      sanity_test:
+        runtime_args:
+          - +UVM_TESTNAME=sanity_test
+          - +TIMEOUT=1000
+      regression_test:
+        runtime_args:
+          - +UVM_TESTNAME=regression_test
+          - +TIMEOUT=3000 

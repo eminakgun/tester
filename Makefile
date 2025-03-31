@@ -1,99 +1,72 @@
-# Generated UVM Testbench Makefile
-# Do not edit manually
+# Riviera-Pro specific settings
+VSIM = vsim
+VLOG = vlog
+VSIMFLAGS = -c -do "run -all; exit;"
+
+# Common source files and directories
+RTL_DIR = rtl
+TB_DIR = tb
+BUILD_DIR = build
+RESULTS_DIR = results
+
+RTL_SRCS = $(wildcard $(RTL_DIR)/*.v)
+TB_SRCS = $(wildcard $(TB_DIR)/*.sv)
 
 # Default variables
-SIMULATOR ?= vcs
-TESTBENCH ?= $(error TESTBENCH is not set)
-TEST ?= $(error TEST is not set)
-SEED ?= random
-DEBUG ?= 0
-COVERAGE ?= 0
-VERBOSITY ?= UVM_MEDIUM
+TEST ?= basic_test
+RUNTIME_ARGS ?=
 
-# Directory structure
-SIM_DIR ?= ./sim
-BUILD_DIR ?= $(SIM_DIR)/build/$(TESTBENCH)
-RESULTS_DIR ?= $(SIM_DIR)/results/$(TESTBENCH)/$(TEST)
+# Testbench targets
+.PHONY: all build_all sim_all clean
+.PHONY: build_testbench1 build_testbench2 sim_testbench1 sim_testbench2
+.PHONY: list-testbenches list-tests
 
-# Include paths
+# Main targets
+all: build_all sim_all
 
-# Define macros
+build_all: build_testbench1 build_testbench2
 
-# Source files
+sim_all: sim_testbench1 sim_testbench2
 
-# Testbench files
+# Build targets
+build_testbench1: $(RTL_SRCS) $(TB_DIR)/testbench1.sv
+	@mkdir -p $(BUILD_DIR)/testbench1
+	cd $(BUILD_DIR)/testbench1 && $(VLOG) -work work ../../$(RTL_DIR)/*.v ../../$(TB_DIR)/testbench1.sv
 
-# VCS-specific settings
-ifeq ($(SIMULATOR),vcs)
-  VCS_HOME ?= $(VCS_HOME)
-  VCS = $(VCS_HOME)/bin/vcs
-  SIMV = $(BUILD_DIR)/simv
+build_testbench2: $(RTL_SRCS) $(TB_DIR)/testbench2.sv
+	@mkdir -p $(BUILD_DIR)/testbench2
+	cd $(BUILD_DIR)/testbench2 && $(VLOG) -work work ../../$(RTL_DIR)/*.v ../../$(TB_DIR)/testbench2.sv
 
-  # Debug settings
-  ifeq ($(DEBUG),1)
-    DEBUG_ARGS = -debug_access+all
-  else
-    DEBUG_ARGS =
-  endif
+# Simulation targets (removed build dependencies)
+sim_testbench1:
+	@mkdir -p $(RESULTS_DIR)/testbench1
+	cd $(BUILD_DIR)/testbench1 && $(VSIM) $(VSIMFLAGS) \
+		-l ../../$(RESULTS_DIR)/testbench1/$(TEST).log \
+		work.testbench1 $(RUNTIME_ARGS)
 
-  # Coverage settings
-  ifeq ($(COVERAGE),1)
-    COVERAGE_ARGS = -cm line+cond+fsm+branch+tgl
-  else
-    COVERAGE_ARGS =
-  endif
+sim_testbench2: build_testbench2
+	@mkdir -p $(RESULTS_DIR)/testbench2
+	cd $(BUILD_DIR)/testbench2 && $(VSIM) $(VSIMFLAGS) \
+		-l ../../$(RESULTS_DIR)/testbench2/$(TEST).log \
+		work.testbench2 $(RUNTIME_ARGS)
 
-  # Build command
-  BUILD_CMD = $(VCS) -o $(SIMV) $(SRC_FILES) $(TB_FILES) \
-              $(INCLUDE_DIRS) $(DEFINES) \
-              -full64 -sverilog -timescale=1ns/1ps -CFLAGS -DVCS \
-              $(DEBUG_ARGS) $(COVERAGE_ARGS) \
-              -ntb_opts uvm-1.2
-
-  # Run command
-  RUN_CMD = $(SIMV) -l $(RESULTS_DIR)/sim.log \
-            +UVM_TESTNAME=$(TEST) \
-            +UVM_VERBOSITY=$(VERBOSITY) \
-            +ntb_random_seed=$(SEED) \
-            $(if $(COVERAGE),,-cm_dir $(RESULTS_DIR)/coverage)
-endif
-
-# Common targets
-.PHONY: all build run clean help list-testbenches list-tests
-
-all: build run
-
-build:
-	@mkdir -p $(BUILD_DIR)
-	$(BUILD_CMD)
-
-run:
-	@mkdir -p $(RESULTS_DIR)
-	$(RUN_CMD)
-
+# Utility targets
 clean:
-	rm -rf $(BUILD_DIR)
-
-help:
-	@echo "UVM Testbench Makefile"
-	@echo "Usage:"
-	@echo "  make build TESTBENCH=<testbench>"
-	@echo "  make run TESTBENCH=<testbench> TEST=<test> [SEED=<seed>] [DEBUG=0|1] [COVERAGE=0|1]"
-	@echo "  make clean TESTBENCH=<testbench>"
-	@echo "  make list-testbenches"
-	@echo "  make list-tests TESTBENCH=<testbench>"
+	rm -rf $(BUILD_DIR) $(RESULTS_DIR) work transcript vsim.wlf
 
 list-testbenches:
-	@echo "my_testbench"
+	@echo "testbench1"
+	@echo "testbench2"
 
 list-tests:
 	@case "$(TESTBENCH)" in \
-		my_testbench) \
+		testbench1) \
 			echo "basic_test"; \
-			echo "extended_test"; \
-			;; \
+			echo "extended_test";; \
+		testbench2) \
+			echo "sanity_test"; \
+			echo "regression_test";; \
 		*) \
 			echo "Unknown testbench: $(TESTBENCH)"; \
-			exit 1; \
-			;; \
-	esac
+			exit 1;; \
+	esac 

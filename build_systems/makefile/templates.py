@@ -361,6 +361,104 @@ class UVMTestbenchMakefile(MakefileTemplate):
         return content
 
 
+class RivieraProMakefile(MakefileTemplate):
+    """Template for Riviera-Pro Makefiles."""
+    
+    def _generate_content(self) -> str:
+        """Generate Riviera-Pro Makefile content.
+        
+        Returns:
+            str: The Makefile content
+        """
+        # Get configuration values
+        vsim = self.config.get("variables", {}).get("VSIM", "vsim")
+        vlog = self.config.get("variables", {}).get("VLOG", "vlog")
+        vsimflags = self.config.get("variables", {}).get("VSIMFLAGS", "-c -do \"run -all; exit;\"")
+        
+        # Get directory structure
+        rtl_dir = self.config.get("directories", {}).get("rtl", "rtl")
+        tb_dir = self.config.get("directories", {}).get("testbench", "tb")
+        build_dir = self.config.get("directories", {}).get("build", "build")
+        results_dir = self.config.get("directories", {}).get("results", "results")
+        
+        content = [
+            "# Generated Riviera-Pro Makefile",
+            "# Do not edit manually",
+            "",
+            "# Simulator settings",
+            f"VSIM = {vsim}",
+            f"VLOG = {vlog}",
+            f"VSIMFLAGS = {vsimflags}",
+            "",
+            "# Directory structure",
+            f"RTL_DIR = {rtl_dir}",
+            f"TB_DIR = {tb_dir}",
+            f"BUILD_DIR = {build_dir}",
+            f"RESULTS_DIR = {results_dir}",
+            "",
+            "# Source files",
+            "RTL_SRCS = $(wildcard $(RTL_DIR)/*.v)",
+            "TB_SRCS = $(wildcard $(TB_DIR)/*.sv)",
+            "",
+            "# Default variables",
+            "TESTBENCH ?= $(error TESTBENCH is not set)",
+            "TEST ?= $(error TEST is not set)",
+            "SEED ?= random",
+            "DEBUG ?= 0",
+            "COVERAGE ?= 0",
+            "VERBOSITY ?= UVM_MEDIUM",
+            "",
+            "# Targets",
+            ".PHONY: build run clean list-testbenches list-tests",
+            "",
+            "build:",
+            "\t@mkdir -p $(BUILD_DIR)",
+            "\t$(VLOG) $(RTL_SRCS) $(TB_DIR)/$(TESTBENCH).sv",
+            "",
+            "run: build",
+            "\t@mkdir -p $(RESULTS_DIR)/$(TESTBENCH)",
+            "\t$(VSIM) $(VSIMFLAGS) \\",
+            "\t\t-l $(RESULTS_DIR)/$(TESTBENCH)/$(TEST).log \\",
+            "\t\t+UVM_TESTNAME=$(TEST) \\",
+            "\t\t+UVM_VERBOSITY=$(VERBOSITY) \\",
+            "\t\t$(TESTBENCH)",
+            "",
+            "clean:",
+            "\trm -rf $(BUILD_DIR) $(RESULTS_DIR) work transcript vsim.wlf",
+            "",
+            "list-testbenches:",
+        ]
+        
+        # Add testbenches from config
+        for tb in self.config.get("template_config", {}).get("testbenches", {}):
+            content.append(f"\t@echo \"{tb}\"")
+            
+        content.extend([
+            "",
+            "list-tests:",
+            "\t@case \"$(TESTBENCH)\" in \\"
+        ])
+        
+        # Add tests for each testbench
+        testbenches = self.config.get("template_config", {}).get("testbenches", {})
+        for tb_name, tb_data in testbenches.items():
+            content.append(f"\t\t{tb_name}) \\")
+            if "tests" in tb_data:
+                for test in tb_data["tests"]:
+                    content.append(f"\t\t\techo \"{test}\"; \\")
+            content.append("\t\t\t;; \\")
+            
+        content.extend([
+            "\t\t*) \\",
+            "\t\t\techo \"Unknown testbench: $(TESTBENCH)\"; \\",
+            "\t\t\texit 1; \\",
+            "\t\t\t;; \\",
+            "\tesac"
+        ])
+        
+        return "\n".join(content)
+
+
 class MakefileTemplateFactory:
     """Factory class for creating Makefile templates."""
     
@@ -380,5 +478,36 @@ class MakefileTemplateFactory:
         """
         if template_type.lower() == "uvm":
             return UVMTestbenchMakefile(config)
+        elif template_type.lower() == "riviera-pro":
+            return RivieraProMakefile(config)
         else:
-            raise ValueError(f"Unsupported Makefile template type: {template_type}") 
+            raise ValueError(f"Unsupported Makefile template type: {template_type}")
+
+
+RIVIERA_TEMPLATE = """
+# Riviera-Pro specific settings
+VSIM = vsim
+VLOG = vlog
+VSIMFLAGS = -c -do "run -all; exit;"
+
+# Common source files and directories
+RTL_SRCS = $(wildcard rtl/*.v)
+TB_SRCS = $(wildcard tb/*.sv)
+
+# Testbench targets
+.PHONY: sim_tb1 sim_tb2 all_tests clean
+
+sim_%: $(RTL_SRCS) tb/%.sv
+	$(VLOG) $(RTL_SRCS) $<
+	$(VSIM) $(VSIMFLAGS) $*
+
+all_tests: sim_tb1 sim_tb2
+
+clean:
+	rm -rf work transcript vsim.wlf
+"""
+
+def get_makefile_template(build_config):
+    if build_config.get('variables', {}).get('SIMULATOR') == 'riviera-pro':
+        return RIVIERA_TEMPLATE
+    # ... existing code ... 

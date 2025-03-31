@@ -9,19 +9,22 @@
 - [x] Implement clean build and incremental build capabilities
 - [x] Add debug build configurations
 - [x] Integrate with Edalize for EDA Tool Interaction
+- [x] Support both separate and combined build/run commands
+- [x] Add proper test handling for build failures
 
 ### Core Framework
 - [x] Create CLI interface for the tool
-  - [ ] Command to list available testbenches
-  - [ ] Command to list available tests for a testbench
-  - [ ] Command to build a testbench
-  - [ ] Command to run specific tests
-  - [ ] Command to clean testbench artifacts
+  - [x] Command to list available testbenches
+  - [x] Command to list available tests for a testbench
+  - [x] Command to build a testbench
+  - [x] Command to run specific tests
+  - [x] Command to clean testbench artifacts
   - [x] Support for configuration file
-- [ ] Implement test result collection and analysis
-- [ ] Create basic HTML report generation
-- [ ] Add logging configuration and verbosity control
-- [ ] Implement testing configuration file format
+- [x] Implement test result collection and analysis
+- [x] Create basic HTML report generation
+- [x] Add logging configuration and verbosity control
+- [x] Implement testing configuration file format
+- [x] Add comprehensive unit tests for build system
 
 ## Phase 2: Advanced Features
 
@@ -30,6 +33,8 @@
 - [ ] Implement test dependencies and ordering
 - [ ] Add parallel test execution capability
 - [ ] Create test suite management
+- [x] Support flexible testbench configuration
+- [x] Handle runtime arguments and test options
 
 ### Reporting and Analysis
 - [ ] Enhance HTML report with detailed test information
@@ -37,6 +42,7 @@
 - [ ] Create test trend analysis
 - [ ] Implement code coverage reporting
 - [ ] Add performance metrics collection
+- [x] Basic test failure reporting and logging
 
 ### Tool Integration
 - [ ] Add support for additional simulators

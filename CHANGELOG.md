@@ -3,6 +3,11 @@
 ## [Unreleased]
 
 ### Added
+- Build system enhancements
+  - Support for separate build/run commands
+  - Combined build/run command support
+  - Improved build failure handling
+  - Flexible testbench configuration
 - Basic CLI framework with Click
 - Configuration file support (YAML-based)
   - Support for both tester.yml and config.yml
@@ -40,6 +45,8 @@
 - Improved error handling and reporting
 - Enhanced configuration file search logic
 - Better test output formatting
+- Simplified build system configuration
+- Enhanced test failure reporting
 
 ### Fixed
 - Path handling in configuration files

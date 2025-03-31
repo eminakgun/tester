@@ -9,6 +9,16 @@ This tool provides a unified interface for running UVM (Universal Verification M
 ## Features
 
 - **Multiple Simulator Support**: Works with VCS, Questa, and Xcelium
+- **Configurable Build System**: Supports custom Makefiles and generated templates
+- **Test Organization**: Manage testbenches and tests with YAML configuration
+- **Flexible Build Configuration**
+  - Support for separate build/run commands
+  - Combined build/run command support
+  - Automatic build dependency handling
+- **Enhanced Test Management**
+  - Runtime argument handling
+  - Test-specific configurations
+  - Build failure detection and reporting
 - **Makefile Integration**: Integrates with existing Makefile-based workflows
 - **Configuration-based**: Uses YAML for testbench and test configuration
 - **Regression Management**: Run multiple tests in parallel with smart resource management
@@ -259,7 +269,56 @@ tester --config my_config.yml run basic_test
 tester run basic_test
 ```
 
-In your configuration file, you can specify test-specific runtime arguments:
+### Build System Options
+You can configure testbenches in two ways:
+
+1. Separate build and run commands:
+```yaml
+targets:
+  testbench1:
+    build_command: make build_testbench1
+    run_command: make sim_testbench1
+```
+
+2. Combined build/run command:
+```yaml
+targets:
+  testbench2:
+    run_command: make sim_testbench2  # Handles both build and run
+```
+
+### Example Configurations
+
+The tool includes several example configurations for different use cases:
+
+1. **Custom Makefile** (`examples/configs/custom_makefile.yml`)
+   - Use when you have an existing Makefile and want to integrate it with the tool
+   - Preserves your existing build system while adding tool features
+
+2. **Generated Makefile** (`examples/configs/generated_makefile.yml`)
+   - Use when you want the tool to generate a Makefile based on your configuration
+   - Best for new projects or standardized setups
+
+3. **Edalize** (`examples/configs/edalize.yml`)
+   - Use when you want to use Edalize for direct tool integration without Makefiles
+   - Provides simulator-agnostic configuration
+
+4. **Minimal** (`examples/configs/minimal.yml`)
+   - Use as a starting point for simple projects
+   - Contains only essential settings
+
+To use an example configuration:
+
+```bash
+cp examples/configs/custom_makefile.yml config.yml
+```
+
+**Configuration Notes:**
+- All paths in configuration files are relative to the project root
+- The `default_testbench` setting is optional but recommended
+- Runtime arguments can be specified per test or added via command line
+
+Example configuration with test-specific runtime arguments:
 
 ```yaml
 build_system: makefile
@@ -325,6 +384,15 @@ tester build
    - Command line arguments
 
 5. For UVM testbenches, always ensure `+UVM_TESTNAME` is set correctly
+
+## Riviera-Pro Support
+
+To use Riviera-Pro for simulation:
+
+1. Create a configuration file (see `examples/configs/riviera_testbenches.yml`)
+2. Organize your testbenches in the `tb/` directory with names matching your make targets
+3. Run specific testbenches with `make sim_testbench_name`
+4. Run all testbenches with `make all_tests`
 
 ## Roadmap
 

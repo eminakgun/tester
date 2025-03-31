@@ -145,6 +145,20 @@ class MakefileBuildSystem(BuildSystemBase):
             runtime_args = run_options.pop("runtime_args")
             run_options["RUNTIME_ARGS"] = " ".join(runtime_args)
         
+        # Check if testbench has a separate build command
+        targets = self.config.get("targets", {})
+        testbench_config = targets.get(testbench, {})
+        
+        if "build_command" in testbench_config:
+            # If there's a build command, run build first
+            logger.info(f"Building testbench {testbench} before running test")
+            if not self.build(testbench, run_options):
+                logger.error(f"Build failed for testbench {testbench}")
+                return False
+        else:
+            # No build command - assume run command handles both build and run
+            logger.info(f"No separate build command for {testbench}, assuming run command handles build")
+        
         return self._run_make_command("run", run_options)
 
     def clean(self, testbench: str) -> bool:
