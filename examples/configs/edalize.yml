@@ -1,0 +1,35 @@
+# Example configuration when using Edalize
+build_system: edalize
+work_root: build/
+tool: vcs
+parameters:
+  PARAM1: value1
+
+files:
+  - name: src/file1.sv
+    file_type: systemVerilogSource
+  - name: src/file2.sv
+    file_type: systemVerilogSource
+
+testbenches:
+  testbench1:
+    toplevel: tb_top
+    files:
+      - name: tb/tb_top.sv
+        file_type: systemVerilogSource
+    parameters:
+      TB_PARAM: tb_value
+    tests:
+      basic_test:
+        runtime_args:
+          - +UVM_TESTNAME=basic_test
+          - +TIMEOUT=1000
+      extended_test:
+        runtime_args:
+          - +UVM_TESTNAME=extended_test
+          - +TIMEOUT=2000
+
+vcs_options:
+  compile_flags:
+    - -sverilog
+    - -full64 

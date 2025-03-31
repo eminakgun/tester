@@ -1,0 +1,12 @@
+# Minimal configuration example
+build_system: makefile
+makefile_path: .
+make_command: make
+use_custom_makefile: true
+default_testbench: my_testbench
+
+testbenches:
+  my_testbench:
+    tests:
+      - basic_test
+      - extended_test 

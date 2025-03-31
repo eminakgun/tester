@@ -1,0 +1,31 @@
+# Example configuration when generating a Makefile
+build_system: makefile
+makefile_path: build/  # Where to generate the Makefile
+make_command: make
+use_custom_makefile: false
+template_type: uvm
+default_testbench: my_testbench
+
+template_config:
+  simulator: vcs
+  compile_flags:
+    - -sverilog
+    - -full64
+  testbenches:
+    my_testbench:
+      files:
+        - tb/my_testbench.sv
+        - tb/my_interface.sv
+      includes:
+        - include/
+      defines:
+        - MY_DEFINE=1
+      tests:
+        basic_test:
+          runtime_args:
+            - +UVM_TESTNAME=basic_test
+            - +TIMEOUT=1000
+        extended_test:
+          runtime_args:
+            - +UVM_TESTNAME=extended_test
+            - +TIMEOUT=2000 

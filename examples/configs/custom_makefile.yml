@@ -1,0 +1,19 @@
+# Example configuration when using an existing Makefile
+build_system: makefile
+makefile_path: /path/to/your/Makefile
+make_command: make
+use_custom_makefile: true
+default_testbench: my_testbench
+
+testbenches:
+  my_testbench:
+    tests:
+      basic_test:
+        runtime_args:
+          - +UVM_TESTNAME=basic_test
+          - +TIMEOUT=1000
+      extended_test:
+        runtime_args:
+          - +UVM_TESTNAME=extended_test
+          - +TIMEOUT=2000
+          - +MY_ARG=value2 
