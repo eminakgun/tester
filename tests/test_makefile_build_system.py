@@ -225,4 +225,34 @@ class TestMakefileBuildSystem:
         assert "RUNTIME_ARGS=+UVM_TESTNAME=test1 +TIMEOUT=1000" in cmd_args
         assert "SEED=12345" in cmd_args
         assert "VERBOSITY=UVM_HIGH" in cmd_args
-        assert result is True 
+        assert result is True
+
+
+@patch('subprocess.run')
+def test_build_with_custom_build_command(mock_run, makefile_config):
+    """Test build when testbench has a custom build command"""
+    # Setup
+    config = makefile_config.copy()
+    config["targets"] = {
+        "custom_testbench": {
+            "build_command": "make custom_build_target",
+            "run_command": "make custom_run_target"
+        }
+    }
+    
+    mock_run.return_value = MagicMock(returncode=0)
+    build_system = MakefileBuildSystem(config)
+    
+    # Execute
+    result = build_system.build("custom_testbench", {"debug": True})
+    
+    # Verify
+    mock_run.assert_called_once()
+    cmd_args = mock_run.call_args[0][0]
+    
+    # Verify the custom target is used instead of the default "build" target
+    assert "custom_build_target" in cmd_args
+    assert "build" not in cmd_args
+    assert "TESTBENCH=custom_testbench" in cmd_args
+    assert "DEBUG=1" in cmd_args
+    assert result is True 

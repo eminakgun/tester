@@ -104,7 +104,27 @@ class MakefileBuildSystem(BuildSystemBase):
             logger.info(f"Performing clean build for testbench {testbench}")
             self.clean(testbench)
         
-        return self._run_make_command("build", build_options)
+        # Check if testbench has a custom build command
+        targets = self.config.get("targets", {})
+        testbench_config = targets.get(testbench, {})
+        
+        if "build_command" in testbench_config:
+            # Use the custom build command
+            custom_cmd = testbench_config["build_command"]
+            logger.info(f"Using custom build command: {custom_cmd}")
+            
+            # Parse the command to extract the make target
+            # Assuming format like "make build_testbench1"
+            parts = custom_cmd.split()
+            if len(parts) > 1 and parts[0].lower() == "make":
+                target = parts[1]
+                return self._run_make_command(target, build_options)
+            else:
+                logger.error(f"Invalid build command format: {custom_cmd}")
+                return False
+        else:
+            # Use default "build" target
+            return self._run_make_command("build", build_options)
 
     def run(self, testbench: str, test: str, options: Optional[Dict[str, Any]] = None) -> bool:
         """Run a specific test for the given testbench using make.
