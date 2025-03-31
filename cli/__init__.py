@@ -175,19 +175,45 @@ def build(ctx, config, testbench: str, debug: bool, incremental: bool):
         raise click.Abort()
 
 @cli.command()
-@click.argument('testbench', required=False)
-@click.argument('test')
+@click.argument('arg1', required=False)
+@click.argument('arg2', required=False)
+@click.option('--testbench', '-t', help='Testbench name (alternative to positional argument)')
 @click.option('--seed', type=int, help='Random seed for test')
 @click.option('--verbosity', type=click.Choice(['LOW', 'MEDIUM', 'HIGH', 'DEBUG'], case_sensitive=False))
 @click.option('--coverage', is_flag=True, help='Enable coverage collection')
 @click.option('--runtime-args', '-r', multiple=True, help='Additional runtime arguments (can be used multiple times)')
 @click.pass_obj
 @click.pass_context
-def run(ctx, config, testbench: str, test: str, seed: Optional[int], verbosity: Optional[str], coverage: bool, runtime_args: tuple):
-    """Run a specific test"""
+def run(ctx, config, arg1: Optional[str], arg2: Optional[str], testbench: Optional[str], 
+        seed: Optional[int], verbosity: Optional[str], coverage: bool, runtime_args: tuple):
+    """Run a specific test
+    
+    Usage:
+      tester run [TESTBENCH] TEST
+      tester run TEST --testbench TESTBENCH
+      tester run TEST  (uses default testbench)
+    """
     try:
-        if not testbench:
-            testbench = get_default_testbench(config)
+        # Add debug logging
+        logger.debug(f"Config type: {type(config)}")
+        logger.debug(f"Config content: {config}")
+        
+        # Determine testbench and test from arguments
+        if arg1 and arg2:
+            # Two positional args: first is testbench, second is test
+            tb_name = arg1
+            test_name = arg2
+        elif arg1 and testbench:
+            # One positional arg + --testbench option: arg1 is test, testbench is from option
+            tb_name = testbench
+            test_name = arg1
+        elif arg1:
+            # Only one positional arg: it's the test name, use default testbench
+            test_name = arg1
+            tb_name = testbench or get_default_testbench(config)
+        else:
+            # No positional args: error
+            raise click.UsageError("Test name is required")
         
         build_system = get_build_system(config)
         options = {
@@ -202,20 +228,28 @@ def run(ctx, config, testbench: str, test: str, seed: Optional[int], verbosity: 
             options["verbosity"] = verbosity
         
         # Get test-specific runtime args from config
-        test_config = config.get("testbenches", {}).get(testbench, {}).get("tests", {}).get(test, {})
+        test_config = config.get("testbenches", {}).get(tb_name, {}).get("tests", {}).get(test_name, {})
         config_runtime_args = test_config.get("runtime_args", [])
         
         # Combine config runtime args with command-line runtime args
-        all_runtime_args = list(config_runtime_args)
+        # Make sure config_runtime_args is a list
+        if isinstance(config_runtime_args, list):
+            all_runtime_args = list(config_runtime_args)
+        else:
+            # Handle the case where it might be something else
+            all_runtime_args = []
+            if config_runtime_args:
+                all_runtime_args.append(str(config_runtime_args))
+        
         all_runtime_args.extend(runtime_args)
         
         if all_runtime_args:
             options["runtime_args"] = all_runtime_args
         
-        if build_system.run(testbench, test, options):
-            click.echo(f"Successfully ran test '{test}' for testbench '{testbench}'")
+        if build_system.run(tb_name, test_name, options):
+            click.echo(f"Successfully ran test '{test_name}' for testbench '{tb_name}'")
         else:
-            click.echo(f"Failed to run test '{test}' for testbench '{testbench}'")
+            click.echo(f"Failed to run test '{test_name}' for testbench '{tb_name}'")
             raise click.Abort()
     except Exception as e:
         logger.error(f"Failed to run test: {e}")
@@ -238,4 +272,4 @@ def clean(config, testbench: str):
         raise click.Abort()
 
 if __name__ == '__main__':
-    cli() 
+    cli(obj=None)  # Pass None as the initial obj value 
