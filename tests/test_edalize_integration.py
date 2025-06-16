@@ -1,8 +1,9 @@
-import os
-import pytest
 import importlib
-from unittest.mock import patch, MagicMock, mock_open
+import os
 import shutil
+from unittest.mock import MagicMock, mock_open, patch
+
+import pytest
 
 from build_systems.edalize_integration import EdalizeIntegration
 

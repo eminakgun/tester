@@ -1,8 +1,9 @@
 import os
-import pytest
-from unittest.mock import patch, mock_open, MagicMock
+from unittest.mock import MagicMock, mock_open, patch
 
-from build_systems.makefile.templates import MakefileTemplate, UVMTestbenchMakefile, MakefileTemplateFactory
+import pytest
+
+from build_systems.makefile.templates import MakefileTemplate, MakefileTemplateFactory, UVMTestbenchMakefile
 
 
 class TestMakefileTemplate:

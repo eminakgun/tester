@@ -1,14 +1,15 @@
-import click
 import logging
-import yaml
 from pathlib import Path
 from typing import Optional
 
+import click
+import yaml
+
 DEFAULT_CONFIG_FILES = ["tester.yml", "config.yml"]
 
-from config.config_manager import ConfigManager
-from build_systems.makefile import MakefileBuildSystem
 from build_systems.edalize_integration import EdalizeIntegration
+from build_systems.makefile import MakefileBuildSystem
+from config.config_manager import ConfigManager
 
 logger = logging.getLogger(__name__)
 

@@ -1,15 +1,16 @@
-import os
-import pytest
-from unittest.mock import patch, MagicMock
-from pathlib import Path
-import click
-from click.testing import CliRunner
-import yaml
 import logging
+import os
+from pathlib import Path
+from unittest.mock import MagicMock, patch
 
-from cli import cli, find_config_file, load_config, get_default_testbench, get_build_system
-from build_systems.makefile import MakefileBuildSystem
+import click
+import pytest
+import yaml
+from click.testing import CliRunner
+
 from build_systems.edalize_integration import EdalizeIntegration
+from build_systems.makefile import MakefileBuildSystem
+from cli import cli, find_config_file, get_build_system, get_default_testbench, load_config
 
 
 @pytest.fixture

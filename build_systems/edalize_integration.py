@@ -1,10 +1,11 @@
-import os
-import logging
-import shutil
-from typing import Dict, List, Optional, Any
-import edalize
-from pathlib import Path
 import importlib
+import logging
+import os
+import shutil
+from pathlib import Path
+from typing import Any, Dict, List, Optional
+
+import edalize
 
 from build_systems.base import BuildSystemBase
 

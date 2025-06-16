@@ -1,9 +1,9 @@
-from typing import Dict, List, Optional, Any
-import os
-import subprocess
 import logging
+import os
 import shutil
+import subprocess
 from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 from build_systems.base import BuildSystemBase
 from build_systems.makefile.templates import MakefileTemplateFactory
