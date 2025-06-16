@@ -1,6 +1,7 @@
+import datetime
 import os
 import time
-import datetime
+
 from .reporting import TestReport
 
 
