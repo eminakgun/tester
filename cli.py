@@ -10,4 +10,4 @@ from .simulator.xcelium import XceliumSimulator
 from .simulator.makefile import MakefileSimulator
 from .build_systems.simulators.adapter import SimulatorAdapter
 from .build_systems.makefile.adapter import MakefileBuildSystem
-from .runner.test_runner import TestRunner 
+from .runner.test_runner import TestRunner

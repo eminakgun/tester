@@ -26,12 +26,12 @@ class EdalizeIntegration(BuildSystemBase):
         self.parameters = config.get("parameters", {})
         self.files = config.get("files", [])
         self.testbenches = config.get("testbenches", {})
-        
+
         # Set up tool-specific configurations
         self.tool_options = {
             "vcs": config.get("vcs_options", {}),
             "questa": config.get("questa_options", {}),
-            "xcelium": config.get("xcelium_options", {})
+            "xcelium": config.get("xcelium_options", {}),
         }
 
     def _prepare_edalize_config(self, testbench: str, test: Optional[str] = None) -> Dict[str, Any]:
@@ -49,17 +49,17 @@ class EdalizeIntegration(BuildSystemBase):
             "name": testbench,
             "files": self.files.copy(),
             "parameters": self.parameters.copy(),
-            "toplevel": self.testbenches.get(testbench, {}).get("toplevel", testbench)
+            "toplevel": self.testbenches.get(testbench, {}).get("toplevel", testbench),
         }
-        
+
         # Add testbench-specific files
         tb_files = self.testbenches.get(testbench, {}).get("files", [])
         edam["files"].extend(tb_files)
-        
+
         # Add testbench-specific parameters
         tb_params = self.testbenches.get(testbench, {}).get("parameters", {})
         edam["parameters"].update(tb_params)
-        
+
         # Add test-specific parameters if test is provided
         if test:
             test_params = self.testbenches.get(testbench, {}).get("tests", {}).get(test, {})
@@ -67,14 +67,12 @@ class EdalizeIntegration(BuildSystemBase):
                 # Special handling for UVM test name
                 if "uvm_testname" not in test_params and self.tool in ["vcs", "questa", "xcelium"]:
                     test_params["uvm_testname"] = test
-                
+
                 edam["parameters"].update(test_params)
-        
+
         # Add tool-specific options
-        edam["tool_options"] = {
-            self.tool: self.tool_options.get(self.tool, {})
-        }
-        
+        edam["tool_options"] = {self.tool: self.tool_options.get(self.tool, {})}
+
         return edam
 
     def _get_edalize_backend(self, testbench: str, test: Optional[str] = None) -> Any:
@@ -88,15 +86,15 @@ class EdalizeIntegration(BuildSystemBase):
             Any: Configured Edalize backend
         """
         edam = self._prepare_edalize_config(testbench, test)
-        
+
         # Create work directory
         work_dir = os.path.join(self.work_root, testbench)
         os.makedirs(work_dir, exist_ok=True)
-        
+
         # Create backend using updated edalize API
         try:
             # The newer edalize API
-            if hasattr(edalize, 'get_edam_tool'):
+            if hasattr(edalize, "get_edam_tool"):
                 backend = edalize.get_edam_tool(self.tool, edam, work_dir)
             # Fallback to direct import
             else:
@@ -104,7 +102,7 @@ class EdalizeIntegration(BuildSystemBase):
                 tool_module = importlib.import_module(f"edalize.{self.tool}")
                 tool_class = getattr(tool_module, self.tool.capitalize())
                 backend = tool_class(edam=edam, work_root=work_dir)
-            
+
             return backend
         except Exception as e:
             logger.error(f"Failed to create Edalize backend: {e}")
@@ -122,7 +120,7 @@ class EdalizeIntegration(BuildSystemBase):
         """
         try:
             backend = self._get_edalize_backend(testbench)
-            
+
             # Handle debug mode
             if options and options.get("debug"):
                 if self.tool == "vcs":
@@ -131,19 +129,19 @@ class EdalizeIntegration(BuildSystemBase):
                     backend.tool_options["questa"]["vopt_args"] = "-debug"
                 elif self.tool == "xcelium":
                     backend.tool_options["xcelium"]["xrun_args"] = "-debug"
-            
+
             # Clean build if requested
             if options and not options.get("incremental", True):
                 logger.info(f"Performing clean build for testbench {testbench}")
                 self.clean(testbench)
-            
+
             # Configure and build
             logger.info(f"Configuring testbench {testbench} with {self.tool}")
             backend.configure()
-            
+
             logger.info(f"Building testbench {testbench} with {self.tool}")
             backend.build()
-            
+
             return True
         except Exception as e:
             logger.error(f"Failed to build testbench {testbench}: {e}")
@@ -162,10 +160,10 @@ class EdalizeIntegration(BuildSystemBase):
         """
         try:
             backend = self._get_edalize_backend(testbench, test)
-            
+
             # Handle run options
             run_options = {}
-            
+
             # Handle seed
             if options and "seed" in options:
                 if self.tool == "vcs":
@@ -174,23 +172,23 @@ class EdalizeIntegration(BuildSystemBase):
                     run_options["sv_seed"] = str(options["seed"])
                 elif self.tool == "xcelium":
                     run_options["seed"] = str(options["seed"])
-            
+
             # Handle verbosity
             if options and "verbosity" in options:
                 verbosity = options["verbosity"].upper()
                 if not verbosity.startswith("UVM_"):
                     verbosity = f"UVM_{verbosity}"
                 run_options["UVM_VERBOSITY"] = verbosity
-            
+
             # Configure if needed
             if not os.path.exists(os.path.join(self.work_root, testbench, "Makefile")):
                 logger.info(f"Configuring testbench {testbench} with {self.tool}")
                 backend.configure()
-            
+
             # Run the test
             logger.info(f"Running test {test} for testbench {testbench} with {self.tool}")
             backend.run(run_options)
-            
+
             return True
         except Exception as e:
             logger.error(f"Failed to run test {test} for testbench {testbench}: {e}")
@@ -206,7 +204,7 @@ class EdalizeIntegration(BuildSystemBase):
             bool: True if clean was successful, False otherwise
         """
         work_dir = os.path.join(self.work_root, testbench)
-        
+
         try:
             if os.path.exists(work_dir):
                 logger.info(f"Cleaning directory {work_dir}")
@@ -236,5 +234,5 @@ class EdalizeIntegration(BuildSystemBase):
         if testbench not in self.testbenches:
             logger.warning(f"Unknown testbench: {testbench}")
             return []
-        
-        return list(self.testbenches[testbench].get("tests", {}).keys()) 
+
+        return list(self.testbenches[testbench].get("tests", {}).keys())

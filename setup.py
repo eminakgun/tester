@@ -14,6 +14,7 @@ setup(
             "pytest>=7.0.0",
             "pytest-cov>=4.0.0",
             "pytest-click>=1.1.0",
+            "black>=23.0.0",  # Added Black as a dev dependency
         ],
     },
     entry_points={
@@ -26,4 +27,4 @@ setup(
     author="Your Name",
     author_email="your.email@example.com",
     url="https://github.com/yourusername/tester",
-) 
+)

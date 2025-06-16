@@ -27,7 +27,7 @@ class MakefileBuildSystem(BuildSystemBase):
         self.use_custom_makefile = config.get("use_custom_makefile", True)
         self.template_config = config.get("template_config", {})
         self.generated_makefile_path = config.get("generated_makefile_path")
-        
+
         # Generate Makefile if needed
         if not self.use_custom_makefile:
             self._generate_makefile()
@@ -35,19 +35,17 @@ class MakefileBuildSystem(BuildSystemBase):
     def _generate_makefile(self) -> None:
         """Generate a Makefile from template."""
         if not self.generated_makefile_path:
-            self.generated_makefile_path = os.path.join(
-                self.makefile_path, "Makefile"
-            )
-        
+            self.generated_makefile_path = os.path.join(self.makefile_path, "Makefile")
+
         # Create makefile directory if it doesn't exist
         makefile_dir = os.path.dirname(self.generated_makefile_path)
         os.makedirs(makefile_dir, exist_ok=True)
-        
+
         # Generate the makefile
         try:
             template = MakefileTemplateFactory.create(self.template_type, self.template_config)
             template.generate(self.generated_makefile_path)
-            
+
             # Update makefile_path to use the generated makefile
             self.makefile_path = os.path.dirname(self.generated_makefile_path)
             logger.info(f"Generated Makefile at {self.generated_makefile_path}")
@@ -66,31 +64,31 @@ class MakefileBuildSystem(BuildSystemBase):
             bool: True if command was successful, False otherwise
         """
         cmd = [self.make_command, "-C", self.makefile_path, target]
-        
+
         if options:
             for key, value in options.items():
                 cmd.append(f"{key}={value}")
-        
+
         logger.debug(f"Running command: {' '.join(cmd)}")
-        
+
         try:
             # Check if verbose mode is enabled
             verbose = options.get("verbose", False)
-            
+
             if verbose:
                 # Run with output displayed to console
                 result = subprocess.run(cmd, check=True)
             else:
                 # Capture output (original behavior)
                 result = subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            
+
             return True
         except subprocess.CalledProcessError as e:
             logger.error(f"Make command failed: {e}")
             # Always show error output even in non-verbose mode
-            if hasattr(e, 'stdout') and e.stdout:
+            if hasattr(e, "stdout") and e.stdout:
                 logger.error(f"Stdout: {e.stdout.decode('utf-8')}")
-            if hasattr(e, 'stderr') and e.stderr:
+            if hasattr(e, "stderr") and e.stderr:
                 logger.error(f"Stderr: {e.stderr.decode('utf-8')}")
             return False
 
@@ -106,25 +104,25 @@ class MakefileBuildSystem(BuildSystemBase):
         """
         build_options = options or {}
         build_options["TESTBENCH"] = testbench
-        
+
         # Handle debug mode
         if "debug" in build_options:
             build_options["DEBUG"] = "1" if build_options.pop("debug") else "0"
-            
+
         # Handle incremental build
         if "incremental" in build_options and not build_options.pop("incremental"):
             logger.info(f"Performing clean build for testbench {testbench}")
             self.clean(testbench)
-        
+
         # Check if testbench has a custom build command
         targets = self.config.get("targets", {})
         testbench_config = targets.get(testbench, {})
-        
+
         if "build_command" in testbench_config:
             # Use the custom build command
             custom_cmd = testbench_config["build_command"]
             logger.info(f"Using custom build command: {custom_cmd}")
-            
+
             # Parse the command to extract the make target
             # Assuming format like "make build_testbench1"
             parts = custom_cmd.split()
@@ -152,35 +150,35 @@ class MakefileBuildSystem(BuildSystemBase):
         run_options = options or {}
         run_options["TESTBENCH"] = testbench
         run_options["TEST"] = test
-        
+
         # Handle debug mode
         if "debug" in run_options:
             run_options["DEBUG"] = "1" if run_options.pop("debug") else "0"
-            
+
         # Handle coverage
         if "coverage" in run_options:
             run_options["COVERAGE"] = "1" if run_options.pop("coverage") else "0"
-            
+
         # Handle seed
         if "seed" in run_options:
             run_options["SEED"] = str(run_options.pop("seed"))
-            
+
         # Handle verbosity
         if "verbosity" in run_options:
             verbosity = run_options.pop("verbosity").upper()
             if not verbosity.startswith("UVM_"):
                 verbosity = f"UVM_{verbosity}"
             run_options["VERBOSITY"] = verbosity
-        
+
         # Handle runtime arguments
         if "runtime_args" in run_options:
             runtime_args = run_options.pop("runtime_args")
             run_options["RUNTIME_ARGS"] = " ".join(runtime_args)
-        
+
         # Check if testbench has a separate build command
         targets = self.config.get("targets", {})
         testbench_config = targets.get(testbench, {})
-        
+
         if "build_command" in testbench_config:
             # If there's a build command, run build first
             logger.info(f"Building testbench {testbench} before running test")
@@ -190,13 +188,13 @@ class MakefileBuildSystem(BuildSystemBase):
         else:
             # No build command - assume run command handles both build and run
             logger.info(f"No separate build command for {testbench}, assuming run command handles build")
-        
+
         # Check if testbench has a custom run command
         if "run_command" in testbench_config:
             # Use the custom run command
             custom_cmd = testbench_config["run_command"]
             logger.info(f"Using custom run command: {custom_cmd}")
-            
+
             # Parse the command to extract the make target
             # Assuming format like "make sim_testbench1"
             parts = custom_cmd.split()
@@ -220,7 +218,7 @@ class MakefileBuildSystem(BuildSystemBase):
             bool: True if clean was successful, False otherwise
         """
         clean_options = {"TESTBENCH": testbench}
-        
+
         return self._run_make_command("clean", clean_options)
 
     def get_available_testbenches(self) -> List[str]:
@@ -232,10 +230,10 @@ class MakefileBuildSystem(BuildSystemBase):
         # This implementation assumes there's a make target 'list-testbenches'
         # that outputs available testbenches one per line
         cmd = [self.make_command, "-C", self.makefile_path, "list-testbenches"]
-        
+
         try:
             result = subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            testbenches = result.stdout.decode('utf-8').strip().split('\n')
+            testbenches = result.stdout.decode("utf-8").strip().split("\n")
             return [tb.strip() for tb in testbenches if tb.strip()]
         except subprocess.CalledProcessError as e:
             logger.error(f"Failed to get testbenches: {e}")
@@ -253,11 +251,11 @@ class MakefileBuildSystem(BuildSystemBase):
         # This implementation assumes there's a make target 'list-tests'
         # that outputs available tests one per line
         cmd = [self.make_command, "-C", self.makefile_path, "list-tests", f"TESTBENCH={testbench}"]
-        
+
         try:
             result = subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            tests = result.stdout.decode('utf-8').strip().split('\n')
+            tests = result.stdout.decode("utf-8").strip().split("\n")
             return [test.strip() for test in tests if test.strip()]
         except subprocess.CalledProcessError as e:
             logger.error(f"Failed to get tests for {testbench}: {e}")
-            return [] 
+            return []

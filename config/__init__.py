@@ -1,1 +1,1 @@
-"""Configuration management for the tester package.""" 
+"""Configuration management for the tester package."""

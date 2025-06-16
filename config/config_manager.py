@@ -1,4 +1,4 @@
-# No import changes needed - imports are standard library 
+# No import changes needed - imports are standard library
 
 import os
 import yaml
@@ -25,7 +25,7 @@ class ConfigManager:
         """
         if not os.path.exists(self.config_file):
             return {}
-            
+
         try:
             with open(self.config_file, "r") as f:
                 return yaml.safe_load(f) or {}
@@ -69,4 +69,4 @@ class ConfigManager:
         """
         tb_config = self.get_testbench_config(testbench)
         tests = tb_config.get("tests", {})
-        return tests.get(test, {}) 
+        return tests.get(test, {})

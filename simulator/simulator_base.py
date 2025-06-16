@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Dict, List, Optional, Any
 
+
 class SimulatorBase(ABC):
     """Abstract base class for all simulators."""
 
@@ -70,4 +71,4 @@ class SimulatorBase(ABC):
         Returns:
             List[str]: List of test names
         """
-        pass 
+        pass
