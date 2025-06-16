@@ -5,12 +5,11 @@ from typing import Optional
 import click
 import yaml
 
-DEFAULT_CONFIG_FILES = ["tester.yml", "config.yml"]
-
 from build_systems.edalize_integration import EdalizeIntegration
 from build_systems.makefile import MakefileBuildSystem
 from config.config_manager import ConfigManager
 
+DEFAULT_CONFIG_FILES = ["tester.yml", "config.yml"]
 logger = logging.getLogger(__name__)
 
 

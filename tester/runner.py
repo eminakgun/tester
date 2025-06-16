@@ -1,3 +1,6 @@
+import os
+import time
+import datetime
 from .reporting import TestReport
 
 
@@ -8,9 +11,16 @@ class TestRunner:
     def run_test(self, testbench, test, **kwargs):
         """Run a single test and collect results."""
         start_time = time.time()
+        details = None
+        result = None  # Initialize result variable
         try:
             # Existing test execution code...
-            status = "passed" if result.success else "failed"
+            # The actual implementation should set the result variable
+            # For now, we'll just initialize it to avoid the undefined name error
+            # Assuming result should be defined in the commented out code
+            # If it's passed as a parameter, we could use:
+            # result = kwargs.get("result")
+            status = "passed" if result and hasattr(result, "success") and result.success else "failed"
         except Exception as e:
             status = "failed"
             details = str(e)
